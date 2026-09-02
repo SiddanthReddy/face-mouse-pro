@@ -13,7 +13,6 @@
 [![Type Checked: MyPy](https://img.shields.io/badge/Type%20Checked-MyPy-blue.svg?style=for-the-badge)](https://mypy-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B.svg?style=for-the-badge)](LICENSE)
 
-[**Live Demo Script**](docs/DEMO_SCRIPT.md) • [**User Manual**](docs/USER_GUIDE.md) • [**Architecture**](docs/ARCHITECTURE.md) • [**Benchmarks**](docs/PERFORMANCE.md) • [**Accessibility Specs**](docs/ACCESSIBILITY.md) • [**Portfolio Guide**](docs/PORTFOLIO_GUIDE.md)
 
 </div>
 
