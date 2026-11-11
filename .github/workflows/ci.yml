@@ -76,10 +76,6 @@ jobs:
           pytest tests/ -v --durations=10
           pytest face-mouse-pro-core/tests/ -v
 
-      - name: Run Benchmarks
-        run: |
-          python src/utils/benchmark.py
-
   build-executable:
     name: Standalone Windows PyInstaller Build
     needs: test
