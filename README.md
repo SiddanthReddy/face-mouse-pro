@@ -135,7 +135,7 @@ python -m venv venv
 venv\Scripts\activate   # Windows
 # source venv/bin/activate # macOS/Linux
 
-# 3. Install pinned dependencies
+# 3. Install pinned Windows application and shared-core dependencies
 pip install -r requirements.txt
 
 # 4. Launch Face Mouse Pro
@@ -145,9 +145,15 @@ python main.py
 python main.py --settings
 ```
 
+The requirements pin the shared engine to its verified published commit. See
+[Windows core integration](docs/WINDOWS_CORE_INTEGRATION.md) for adapter
+boundaries, installation details and regression tests.
+
 ---
 
 ## 🧪 Quality Assurance & CI Testing
+
+Install dependencies from `requirements.txt` before running from source or building the Windows executable. The Windows app uses the shared core through compatibility adapters; camera, GUI, configuration storage and PyAutoGUI remain app-owned.
 
 ```bash
 # Run 19 Automated PyTest Suites

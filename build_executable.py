@@ -74,7 +74,7 @@ def run_preflight_validation() -> bool:
 
     # 4. Validate Python Dependencies Importable
     print("\n[2/4] Verifying Python Runtime Dependencies...")
-    required_modules = ["cv2", "mediapipe", "pyautogui", "numpy", "customtkinter", "PIL", "psutil"]
+    required_modules = ["cv2", "mediapipe", "pyautogui", "numpy", "customtkinter", "PIL", "psutil", "face_mouse_core"]
     for mod in required_modules:
         try:
             __import__(mod)
@@ -82,6 +82,18 @@ def run_preflight_validation() -> bool:
         except ImportError as e:
             print(f"  [ERROR] Required package '{mod}' is not installed: {e}")
             return False
+
+    try:
+        from importlib.metadata import version
+
+        core_version = version("face-mouse-pro-core")
+        if core_version != "0.1.0":
+            print(f"  [ERROR] face-mouse-pro-core 0.1.0 is required, found {core_version}.")
+            return False
+        print(f"  [OK] Shared core distribution verified: {core_version}")
+    except Exception as e:
+        print(f"  [ERROR] Could not verify face-mouse-pro-core distribution: {e}")
+        return False
 
     return True
 
