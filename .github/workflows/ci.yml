@@ -2,7 +2,7 @@ name: Face Mouse Pro — CI Quality & Build Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, test/windows-opencv-validation ]
   pull_request:
     branches: [ main ]
 
