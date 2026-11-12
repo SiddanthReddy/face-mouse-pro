@@ -1,6 +1,8 @@
 # Face Mouse Pro 🚀
 
-> **Production-Grade, AI-Powered Hands-Free Cursor & Gesture Control Desktop Application.**
+> **A Python computer-vision desktop application for hands-free cursor and gesture control.**
+
+The Windows application uses OpenCV, MediaPipe Face Mesh, CustomTkinter, and the shared [Face Mouse Pro Core](https://github.com/SiddanthReddy/face-mouse-pro-core). A separate macOS implementation is being developed in [face-mouse-pro-mac](https://github.com/SiddanthReddy/face-mouse-pro-mac).
 
 <div align="center">
 
@@ -8,7 +10,7 @@
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.10%2B-5C3EE8.svg?style=for-the-badge&logo=opencv&logoColor=white)](https://opencv.org/)
 [![MediaPipe](https://img.shields.io/badge/MediaPipe-FaceMesh%20478-00C7B7.svg?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/mediapipe)
 [![CustomTkinter](https://img.shields.io/badge/GUI-CustomTkinter-1F538D.svg?style=for-the-badge)](https://github.com/TomSchimansky/CustomTkinter)
-[![Tests](https://img.shields.io/badge/Tests-19%2F19%20Passing-2EA44F.svg?style=for-the-badge&logo=pytest&logoColor=white)]()
+[![CI](https://github.com/SiddanthReddy/face-mouse-pro/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SiddanthReddy/face-mouse-pro/actions/workflows/ci.yml)
 [![Code Style: Ruff](https://img.shields.io/badge/Code%20Style-Ruff-black.svg?style=for-the-badge&logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
 [![Type Checked: MyPy](https://img.shields.io/badge/Type%20Checked-MyPy-blue.svg?style=for-the-badge)](https://mypy-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B.svg?style=for-the-badge)](LICENSE)
@@ -22,7 +24,7 @@
 
 **Face Mouse Pro** is the completely redesigned, re-architected, and significantly enhanced successor to the initial research prototype [AI-Face-Controlled-Mouse](https://github.com/SiddanthReddy/AI-Face-Controlled-Mouse).
 
-While the foundational concept explored rudimentary facial cursor movement, **Face Mouse Pro** transforms the concept into an enterprise-ready, assistive desktop application engineered with state-of-the-art computer vision, robust filtering mathematics, asynchronous GUI control, and a zero-dependency standalone executable.
+While the foundational concept explored rudimentary facial cursor movement, **Face Mouse Pro** develops the concept into a modular assistive-computing prototype with real-time computer vision, gesture processing, calibration, cursor smoothing, a desktop settings interface, automated tests, and Windows packaging.
 
 ### 📊 Comparative Analysis: Original vs. Face Mouse Pro
 
@@ -59,14 +61,14 @@ For millions of individuals worldwide, interaction with standard physical periph
 
 ## ⚡ Technical Highlights & Stack
 
-- **Computer Vision & Mesh Topology**: Uses **OpenCV 4.10+** and **MediaPipe Face Mesh** to extract 478 3D landmarks at over **370+ FPS** algorithmic throughput.
+- **Computer Vision & Mesh Topology**: Uses **OpenCV 4.10+** and **MediaPipe Face Mesh** to extract 478 3D landmarks for facial landmark extraction. See the benchmark report for the recorded test environment and methodology; performance varies by hardware and camera settings.
 - **Adaptive One-Euro Filter**: Solves the classic trade-off between resting cursor jitter and dynamic movement lag through continuous derivative estimation:
   $$\omega_c = \omega_{min} + \beta |\dot{x}|$$
 - **Dual-Eye Blink Disambiguation Engine**: Computes canonical Eye Aspect Ratio (EAR) across left and right eye contours simultaneously. When both eyes close synchronously, the frame sequence is classified as an involuntary physiological blink and discarded from click triggers.
 - **Mouth Aspect Ratio (MAR) Pitch Scrolling**: Translates inner/outer lip aperture expansion into a specialized scroll mode, tracking vertical head pitch to scroll documents and web pages smoothly.
 - **Modern Asynchronous GUI**: Built with **CustomTkinter**, running asynchronously alongside the computer vision loop to enable real-time parameter tuning (sensitivity, deadzones, thresholds) with instant disk synchronization.
 - **Operating System Event Dispatch**: Uses **PyAutoGUI** with built-in safety margins ($[4, W-4], [4, H-4]$) to prevent cursor corner locking and failsafe exceptions.
-- **Robust Software Engineering**: Type-annotated (`Any` strictly enforced), modular architecture, 100% passing test suite, automated Ruff linting, MyPy static type checking, pre-commit hooks, and GitHub Actions CI.
+- **Robust Software Engineering**: Type-annotated (`Any` strictly enforced), modular architecture, automated unit and adapter tests, automated Ruff linting, MyPy static type checking, pre-commit hooks, and GitHub Actions CI.
 
 ---
 
@@ -120,6 +122,8 @@ For millions of individuals worldwide, interaction with standard physical periph
 
 ## 🚀 Quick Start & Installation
 
+There is currently no published GitHub Release binary. The CI workflow produces a temporary Windows build artifact for validation; use the source installation below for development.
+
 ### Option 1: Standalone Binary (Recommended — No Python Needed)
 1. Download the latest release from the [GitHub Releases](../../releases) page.
 2. Extract the archive and launch **`FaceMousePro.exe`**.
@@ -127,7 +131,7 @@ For millions of individuals worldwide, interaction with standard physical periph
 ### Option 2: Run from Source
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-username/face-mouse-pro.git
+git clone https://github.com/SiddanthReddy/face-mouse-pro.git
 cd "face-mouse-pro"
 
 # 2. Create and activate virtual environment
@@ -156,7 +160,7 @@ boundaries, installation details and regression tests.
 Install dependencies from `requirements.txt` before running from source or building the Windows executable. The Windows app uses the shared core through compatibility adapters; camera, GUI, configuration storage and PyAutoGUI remain app-owned.
 
 ```bash
-# Run 19 Automated PyTest Suites
+# Run the Windows application test suite
 pytest tests/ -v
 
 # Run Ruff Linter & Formatter Check
@@ -240,14 +244,14 @@ Face Mouse Pro/
 
 Structured following Semantic Versioning as defined in [`RELEASES.md`](RELEASES.md):
 
-- **v1.0.0 (Current Production Release)**: Complete 478 3D landmark tracking, One-Euro smoothing, EAR/MAR gesture state machine, CustomTkinter control panel, and standalone Windows binary.
+- **Windows application baseline (development status)**: Complete 478 3D landmark tracking, One-Euro smoothing, EAR/MAR gesture state machine, CustomTkinter control panel, and standalone Windows binary.
 - **v1.1.0 (Enhanced Modalities — Planned)**:
   - Eyebrow raise gesture for middle-click / application switching.
   - Head roll tilt gesture for horizontal scrolling.
   - Multi-monitor dynamic display selection.
-- **v2.0.0 (Next-Gen AI & Cross-Platform — Future)**:
+- **Future research directions**:
   - Deep learning iris gaze-tracking fusion.
-  - Cross-platform support for macOS (Metal/AVFoundation) and Linux (X11/Wayland).
+  - Linux support (X11/Wayland). The macOS implementation is maintained separately and remains experimental.
 
 ---
 
