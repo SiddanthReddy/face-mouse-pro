@@ -118,11 +118,7 @@ Performance depends on CPU/GPU, camera resolution, lighting, and runtime configu
 
 There is currently no published GitHub Release binary. The CI workflow produces a temporary Windows build artifact for validation; use the source installation below.
 
-### Option 1: Standalone Binary (Recommended — No Python Needed)
-1. Download the latest release from the [GitHub Releases](../../releases) page.
-2. Extract the archive and launch **`FaceMousePro.exe`**.
-
-### Option 2: Run from Source
+### Run from Source
 ```bash
 # 1. Clone repository
 git clone https://github.com/SiddanthReddy/face-mouse-pro.git
