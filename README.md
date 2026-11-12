@@ -31,7 +31,7 @@ While the foundational concept explored rudimentary facial cursor movement, **Fa
 | Capability / Feature | Original Version ([AI-Face-Controlled-Mouse](https://github.com/SiddanthReddy/AI-Face-Controlled-Mouse)) | Face Mouse Pro (Next-Gen) |
 | :--- | :--- | :--- |
 | **Facial Landmark Mesh** | Basic landmark points | **Full 478 3D Dense Facial Topology** (MediaPipe Face Mesh) |
-| **Cursor Motion Engine** | Direct raw mapping (High jitter) | **Adaptive 2D One-Euro Kinematic Filter** (Sub-pixel smoothness & zero latency) |
+| **Cursor Motion Engine** | Direct raw mapping (High jitter) | **Adaptive 2D One-Euro Filter** (reduces cursor jitter while retaining responsive movement) |
 | **Calibration System** | None (Fixed screen boundaries) | **Dynamic Spacebar Zero-Point Calibration** with deadzone compensation |
 | **Left Click** | Basic threshold blink | **Eye Aspect Ratio (EAR) State Machine** with frame validation & debouncing |
 | **Right Click** | ❌ Unsupported | **Dedicated Right Eye Single Blink** |
@@ -43,8 +43,8 @@ While the foundational concept explored rudimentary facial cursor movement, **Fa
 | **Settings Management** | Hard-coded constants in code | **Modern CustomTkinter Dark-Mode Control Panel** with live bidirectional sync |
 | **Configuration Persistence**| ❌ None | **JSON Configuration Manager** (`config/settings.json`) with fallback recovery |
 | **Logging & Diagnostics** | Terminal print statements | **Multi-tier Rotating File Logger** (`logs/facemouse.log`) |
-| **Quality Assurance** | ❌ No tests | **19 Automated PyTest Unit Tests**, Ruff Linting, MyPy Type Checking, Pre-commit |
-| **Packaging & Deployment** | Required manual Python runtime | **Zero-Dependency Standalone Windows Executable** (`FaceMousePro.exe` via PyInstaller) |
+| **Quality Assurance** | ❌ No tests | **Automated PyTest Unit Tests**, Ruff Linting, MyPy Type Checking, Pre-commit |
+| **Packaging & Deployment** | Required manual Python runtime | **PyInstaller-packaged Windows executable** (`FaceMousePro.exe`) |
 
 ---
 
@@ -108,21 +108,15 @@ For millions of individuals worldwide, interaction with standard physical periph
 
 ---
 
-## ⚡ Empirical Performance Benchmarks
+## ⚡ Performance Notes
 
-*Hardware: Intel 64-bit Architecture, Windows 10/11. Comprehensive report available in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).*
-
-| Resolution | Processing Throughput (FPS) | Avg Frame Latency (ms) | 95th Percentile Latency (ms) | RAM Allocation (MB) |
-| :--- | :--- | :--- | :--- | :--- |
-| **640x480 (SD / Default)** | **377.9 FPS** | **2.64 ms** | **3.94 ms** | **110.9 MB** |
-| **1280x720 (HD Ready)** | **180.1 FPS** | **5.55 ms** | **7.53 ms** | **120.4 MB** |
-| **1920x1080 (Full HD)** | **156.6 FPS** | **6.38 ms** | **8.74 ms** | **125.0 MB** |
+Performance depends on CPU/GPU, camera resolution, lighting, and runtime configuration. Historical local measurements and their test methodology are documented in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md); they should not be interpreted as guaranteed throughput or as results from every target device. The current CI workflow validates code quality, tests, dependency compatibility, and packaging rather than enforcing an FPS target.
 
 ---
 
 ## 🚀 Quick Start & Installation
 
-There is currently no published GitHub Release binary. The CI workflow produces a temporary Windows build artifact for validation; use the source installation below for development.
+There is currently no published GitHub Release binary. The CI workflow produces a temporary Windows build artifact for validation; use the source installation below.
 
 ### Option 1: Standalone Binary (Recommended — No Python Needed)
 1. Download the latest release from the [GitHub Releases](../../releases) page.
@@ -244,7 +238,7 @@ Face Mouse Pro/
 
 Structured following Semantic Versioning as defined in [`RELEASES.md`](RELEASES.md):
 
-- **Windows application baseline (development status)**: Complete 478 3D landmark tracking, One-Euro smoothing, EAR/MAR gesture state machine, CustomTkinter control panel, and standalone Windows binary.
+- **Windows application baseline (development status)**: Includes 478-landmark MediaPipe tracking, One-Euro smoothing, EAR/MAR gesture handling, a CustomTkinter control panel, and a PyInstaller packaging workflow.
 - **v1.1.0 (Enhanced Modalities — Planned)**:
   - Eyebrow raise gesture for middle-click / application switching.
   - Head roll tilt gesture for horizontal scrolling.
