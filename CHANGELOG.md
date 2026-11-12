@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+### Changed
+- Extract platform-independent gesture, calibration, cursor mapping, and smoothing logic into the separately versioned `face-mouse-pro-core` package.
+- Add Windows compatibility adapters and pin the shared core to commit `7ae514e29578f09a819ae4f5bb84218049e338e5`.
+- Add adapter regression tests, Windows OpenCV dependency validation, and PyInstaller collection for the shared core.
+- Update CI to run quality checks, automated tests, dependency validation, and a Windows build. Hardware testing remains a manual release check.
+
+
 All notable changes to **Face Mouse Pro** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
