@@ -1,11 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
 import sys
-from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 # Dynamically resolve root project directory relative to spec location
 PROJECT_ROOT = os.path.abspath(SPECPATH)
-
 datas = [
     (os.path.join(PROJECT_ROOT, 'config'), 'config'),
 ]
@@ -16,6 +15,7 @@ if os.path.exists(os.path.join(PROJECT_ROOT, 'assets')):
 
 binaries = []
 hiddenimports = []
+hiddenimports += collect_submodules('face_mouse_core')
 
 # Collect dynamic packages
 for pkg in ['mediapipe', 'cv2', 'pyautogui', 'customtkinter', 'PIL']:

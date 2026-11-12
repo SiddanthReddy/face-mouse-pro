@@ -1,96 +1,50 @@
-"""
-Helper functions and mathematical filters for Face Mouse Pro.
-Includes Eye Aspect Ratio (EAR), Mouth Aspect Ratio (MAR), Exponential Moving Average (EMA),
-and One-Euro Filter for jitter-free cursor tracking.
-"""
+"""Windows tuple-based compatibility wrappers for shared geometry and filters."""
 
-import math
+from __future__ import annotations
+
 import time
-from collections.abc import Sequence
+
+from face_mouse_core.config import SmoothingConfig
+from face_mouse_core.cursor import ExponentialSmoother
+from face_mouse_core.cursor import OneEuroFilter1D as CoreOneEuroFilter1D
+from face_mouse_core.gestures.metrics import calculate_ear as _calculate_ear
+from face_mouse_core.gestures.metrics import calculate_mar as _calculate_mar
+from face_mouse_core.gestures.metrics import euclidean_distance as _euclidean_distance
+from face_mouse_core.models import Vector2D
 
 
-def euclidean_distance(pt1: Sequence[float], pt2: Sequence[float]) -> float:
-    """
-    Computes Euclidean distance between two 2D or 3D points.
-    """
-    return math.sqrt(sum((a - b) ** 2 for a, b in zip(pt1, pt2)))
+def euclidean_distance(pt1, pt2) -> float:
+    return _euclidean_distance(pt1, pt2)
 
 
-def calculate_ear(eye_landmarks: Sequence[Sequence[float]]) -> float:
-    """
-    Calculates Eye Aspect Ratio (EAR) given 6 canonical facial eye landmarks.
-    Expected landmark ordering:
-    P1 (outer corner), P2 (upper outer), P3 (upper inner),
-    P4 (inner corner), P5 (lower inner), P6 (lower outer).
-
-    EAR = (|P2 - P6| + |P3 - P5|) / (2 * |P1 - P4|)
-    """
-    if len(eye_landmarks) < 6:
-        return 0.0
-
-    p1, p2, p3, p4, p5, p6 = eye_landmarks[:6]
-
-    v1 = euclidean_distance(p2, p6)
-    v2 = euclidean_distance(p3, p5)
-    horiz = euclidean_distance(p1, p4)
-
-    if horiz <= 1e-6:
-        return 0.0
-
-    return (v1 + v2) / (2.0 * horiz)
+def calculate_ear(eye_landmarks) -> float:
+    return _calculate_ear(eye_landmarks)
 
 
-def calculate_mar(mouth_landmarks: Sequence[Sequence[float]]) -> float:
-    """
-    Calculates Mouth Aspect Ratio (MAR) using key lip landmarks.
-    Expected landmark ordering:
-    P1 (left corner), P2 (upper lip top), P3 (upper lip inner),
-    P4 (right corner), P5 (lower lip inner), P6 (lower lip bottom).
-
-    MAR = (|P2 - P6| + |P3 - P5|) / (2 * |P1 - P4|)
-    """
-    if len(mouth_landmarks) < 6:
-        return 0.0
-
-    p1, p2, p3, p4, p5, p6 = mouth_landmarks[:6]
-
-    v1 = euclidean_distance(p2, p6)
-    v2 = euclidean_distance(p3, p5)
-    horiz = euclidean_distance(p1, p4)
-
-    if horiz <= 1e-6:
-        return 0.0
-
-    return (v1 + v2) / (2.0 * horiz)
+def calculate_mar(mouth_landmarks) -> float:
+    return _calculate_mar(mouth_landmarks)
 
 
 class ExponentialFilter:
-    """
-    Exponential Moving Average (EMA) filter for 2D coordinates.
-    """
+    """Tuple adapter retaining the historic clamped-alpha API."""
 
     def __init__(self, alpha: float = 0.6):
         self.alpha = max(0.01, min(0.99, alpha))
+        self._filter = ExponentialSmoother(self.alpha)
         self.prev_val: tuple[float, float] | None = None
 
     def update(self, val: tuple[float, float]) -> tuple[float, float]:
-        if self.prev_val is None:
-            self.prev_val = val
-            return val
-
-        filtered_x = self.alpha * val[0] + (1.0 - self.alpha) * self.prev_val[0]
-        filtered_y = self.alpha * val[1] + (1.0 - self.alpha) * self.prev_val[1]
-        self.prev_val = (filtered_x, filtered_y)
+        value = self._filter.update(Vector2D(*val))
+        self.prev_val = (value.x, value.y)
         return self.prev_val
 
     def reset(self) -> None:
+        self._filter.reset()
         self.prev_val = None
 
 
 class LowPassFilter:
-    """
-    First-order low-pass filter used by OneEuroFilter.
-    """
+    """Legacy standalone scalar low-pass utility retained for compatibility."""
 
     def __init__(self, alpha: float = 0.5):
         self.alpha = alpha
@@ -102,74 +56,46 @@ class LowPassFilter:
         if self.hat_x_prev is None:
             self.hat_x_prev = x
             return x
-        hat_x = self.alpha * x + (1.0 - self.alpha) * self.hat_x_prev
-        self.hat_x_prev = hat_x
-        return hat_x
+        self.hat_x_prev = self.alpha * x + (1.0 - self.alpha) * self.hat_x_prev
+        return self.hat_x_prev
 
     def reset(self) -> None:
         self.hat_x_prev = None
 
 
 class OneEuroFilter1D:
-    """
-    1D One Euro Filter for adaptive smoothing with low latency and jitter reduction.
-    """
+    """Compatibility wrapper; time acquisition remains in the Windows layer."""
 
     def __init__(self, min_cutoff: float = 1.0, beta: float = 0.007, d_cutoff: float = 1.0):
         self.min_cutoff = min_cutoff
         self.beta = beta
         self.d_cutoff = d_cutoff
-        self.x_filter = LowPassFilter()
-        self.dx_filter = LowPassFilter()
+        self._filter = CoreOneEuroFilter1D(SmoothingConfig(min_cutoff, beta, d_cutoff))
         self.last_time: float | None = None
-
-    @staticmethod
-    def _alpha(rate: float, cutoff: float) -> float:
-        tau = 1.0 / (2.0 * math.pi * cutoff)
-        te = 1.0 / rate
-        return 1.0 / (1.0 + tau / te)
 
     def filter(self, x: float, timestamp: float | None = None) -> float:
         if timestamp is None:
             timestamp = time.perf_counter()
-
-        if self.last_time is None or self.last_time >= timestamp:
-            self.last_time = timestamp
-            return self.x_filter.update(x, 1.0)
-
-        dt = timestamp - self.last_time
         self.last_time = timestamp
-        rate = 1.0 / max(dt, 1e-5)
-
-        # Estimate derivative
-        dx = (x - (self.x_filter.hat_x_prev if self.x_filter.hat_x_prev is not None else x)) * rate
-        edx = self.dx_filter.update(dx, self._alpha(rate, self.d_cutoff))
-
-        # Use derivative to compute dynamic cutoff frequency
-        cutoff = self.min_cutoff + self.beta * abs(edx)
-        return self.x_filter.update(x, self._alpha(rate, cutoff))
+        return self._filter.filter(x, timestamp)
 
     def reset(self) -> None:
-        self.x_filter.reset()
-        self.dx_filter.reset()
+        self._filter.reset()
         self.last_time = None
 
 
 class OneEuroFilter2D:
-    """
-    2D One Euro Filter for smooth and responsive (x, y) cursor coordinates.
-    """
+    """Tuple-based wrapper around the shared 2D One Euro filter."""
 
     def __init__(self, min_cutoff: float = 1.2, beta: float = 0.05, d_cutoff: float = 1.0):
-        self.filter_x = OneEuroFilter1D(min_cutoff=min_cutoff, beta=beta, d_cutoff=d_cutoff)
-        self.filter_y = OneEuroFilter1D(min_cutoff=min_cutoff, beta=beta, d_cutoff=d_cutoff)
+        config = SmoothingConfig(min_cutoff, beta, d_cutoff)
+        self.filter_x = CoreOneEuroFilter1D(config)
+        self.filter_y = CoreOneEuroFilter1D(config)
 
     def filter(self, point: tuple[float, float], timestamp: float | None = None) -> tuple[float, float]:
         if timestamp is None:
             timestamp = time.perf_counter()
-        fx = self.filter_x.filter(point[0], timestamp)
-        fy = self.filter_y.filter(point[1], timestamp)
-        return (fx, fy)
+        return (self.filter_x.filter(point[0], timestamp), self.filter_y.filter(point[1], timestamp))
 
     def reset(self) -> None:
         self.filter_x.reset()

@@ -4,12 +4,17 @@ Executes cursor moves, clicks, drag-and-drop, and scrolling via PyAutoGUI.
 Includes screen boundary clamping and safety features.
 """
 
+from __future__ import annotations
+
 import time
 
 import pyautogui
+from face_mouse_core.config import CursorMappingConfig, SmoothingConfig
+from face_mouse_core.cursor import CursorMapper, OneEuroFilter2D
+from face_mouse_core.gestures import GestureType
+from face_mouse_core.models import Vector2D
 
 from src.core.gesture_detector import GestureAction
-from src.utils.helpers import OneEuroFilter2D
 from src.utils.logger import setup_logger
 
 logger = setup_logger("MouseController")
@@ -60,7 +65,16 @@ class MouseController:
         self.last_scroll_time = 0.0
 
         # Adaptive filter for smooth cursor movement
-        self.filter = OneEuroFilter2D(min_cutoff=1.2, beta=0.04)
+        self._cursor_mapper = CursorMapper(
+            CursorMappingConfig(
+                sensitivity_x=self.sensitivity_x,
+                sensitivity_y=self.sensitivity_y,
+                acceleration_curve=self.acceleration_curve,
+                invert_x=self.invert_x,
+                invert_y=self.invert_y,
+            )
+        )
+        self.filter = OneEuroFilter2D(SmoothingConfig(min_cutoff=1.2, beta=0.04, derivative_cutoff=1.0))
 
         # Virtual cursor position tracker
         self.current_cursor_x = float(self.screen_width // 2)
@@ -82,28 +96,32 @@ class MouseController:
         self.scroll_speed = scroll_cfg.get("scroll_speed", self.scroll_speed)
         self.scroll_deadzone_y = scroll_cfg.get("scroll_deadzone_y", self.scroll_deadzone_y)
         self.scroll_cooldown_sec = scroll_cfg.get("scroll_cooldown_sec", self.scroll_cooldown_sec)
+        self._cursor_mapper = CursorMapper(
+            CursorMappingConfig(
+                sensitivity_x=self.sensitivity_x,
+                sensitivity_y=self.sensitivity_y,
+                acceleration_curve=self.acceleration_curve,
+                invert_x=self.invert_x,
+                invert_y=self.invert_y,
+            )
+        )
 
-    def move_cursor_relative(self, dx: float, dy: float) -> tuple[int, int]:
+    def move_cursor_relative(self, dx: float, dy: float, current_time: float | None = None) -> tuple[int, int]:
         """
         Calculates screen cursor delta from relative normalized face vector and moves the cursor.
         """
         if self.is_paused:
             return int(self.current_cursor_x), int(self.current_cursor_y)
 
-        # Inversion flags
-        if self.invert_x:
-            dx = -dx
-        if self.invert_y:
-            dy = -dy
+        # Core maps the relative vector without knowing display dimensions.
+        mapped = self._cursor_mapper.map_offset(Vector2D(dx, dy))
+        scaled_dx = mapped.x * self.screen_width
+        scaled_dy = mapped.y * self.screen_height
 
-        # Non-linear acceleration response for fine-grain accuracy + fast jumps
-        mag_x = abs(dx) ** self.acceleration_curve
-        mag_y = abs(dy) ** self.acceleration_curve
-        scaled_dx = (1 if dx >= 0 else -1) * mag_x * self.sensitivity_x * self.screen_width
-        scaled_dy = (1 if dy >= 0 else -1) * mag_y * self.sensitivity_y * self.screen_height
-
-        # Smooth using One-Euro Filter
-        smooth_dx, smooth_dy = self.filter.filter((scaled_dx, scaled_dy))
+        # Preserve pixel-domain smoothing and the existing filter parameters.
+        timestamp = time.perf_counter() if current_time is None else current_time
+        smoothed = self.filter.filter(Vector2D(scaled_dx, scaled_dy), timestamp)
+        smooth_dx, smooth_dy = smoothed.x, smoothed.y
 
         # Target coordinates clamped to safe screen boundaries (avoiding exact corner fail-safe triggers)
         margin = 4
@@ -136,19 +154,19 @@ class MouseController:
             return
 
         try:
-            if action == GestureAction.LEFT_CLICK:
+            if action == GestureType.LEFT_CLICK:
                 logger.info("Executing Left Click")
                 pyautogui.click(button="left")
 
-            elif action == GestureAction.RIGHT_CLICK:
+            elif action == GestureType.RIGHT_CLICK:
                 logger.info("Executing Right Click")
                 pyautogui.click(button="right")
 
-            elif action == GestureAction.DOUBLE_CLICK:
+            elif action == GestureType.DOUBLE_CLICK:
                 logger.info("Executing Double Click")
                 pyautogui.doubleClick(button="left")
 
-            elif action == GestureAction.DRAG_TOGGLE:
+            elif action == GestureType.DRAG_TOGGLE:
                 self.is_dragging = not self.is_dragging
                 if self.is_dragging:
                     logger.info("Drag Started: Mouse Down")

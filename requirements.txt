@@ -7,3 +7,5 @@ pillow>=10.0.0,<=12.1.0
 psutil>=5.9.0,<=7.2.2
 pytest>=8.0.0,<=9.1.1
 pyinstaller>=6.0.0,<=6.19.0
+# Shared platform-independent engine, pinned to the verified 0.1.0 source commit.
+face-mouse-pro-core @ git+https://github.com/SiddanthReddy/face-mouse-pro-core.git@7ae514e29578f09a819ae4f5bb84218049e338e5
